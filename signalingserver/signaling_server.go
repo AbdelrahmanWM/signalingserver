@@ -94,7 +94,11 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			peerIDs := s.GetAllPeerIDs()
 			if !s.addSelfToGetPeerIDs {
 				selfIndex := slices.Index(peerIDs, connID)
-				slices.Delete(peerIDs, selfIndex, selfIndex+1)
+				if selfIndex != -1 {
+					peerIDs = slices.Delete(peerIDs, selfIndex, selfIndex+1)
+				} else {
+					log.Printf("connID %v not found in peerIDs", connID)
+				}
 			}
 			payload, err := json.Marshal(peerIDs)
 			if err != nil {
@@ -102,8 +106,9 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				conn.WriteMessage(websocket.TextMessage, []byte("Failed to fetch peer IDs"))
 				continue
 			}
-			index := strings.Index(string(payload), connID)
-			if s.identifySelfInMessages {
+
+			if s.addSelfToGetPeerIDs && s.identifySelfInMessages {
+				index := strings.Index(string(payload), connID)
 				payload = []byte(string(payload[0:index]) + "(self) " + string(payload[index:]))
 			}
 			err = conn.WriteMessage(websocket.TextMessage, payload)
@@ -138,7 +143,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			err = peerConn.WriteMessage(websocket.TextMessage, []byte(msg.Content))
 
 			if err != nil {
-				log.Println("Failed to send message to peer %s: %v\n", msg.PeerID, err)
+				log.Printf("Failed to send message to peer %s: %v\n", msg.PeerID, err)
 				conn.WriteMessage(websocket.TextMessage, []byte("Failed to send message to peer"))
 			}
 		case message.Disconnect:
