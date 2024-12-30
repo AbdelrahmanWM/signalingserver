@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/AbdelrahmanWM/signalingserver/signalingserver/message"
@@ -27,16 +28,20 @@ type SignalingServer struct {
 	// This flag controls whether the server should identify a message being sent to the same peer
 	// (i.e., the message is being sent to the "self" peer) by appending a label like (self) or (To self) to the message.
 	identifySelfInMessages bool
+
+	// This flag controls whether the server should include the requesting peer ID
+	// to the 'GetAllPeerIDs' message.
+	addSelfToGetPeerIDs bool
 }
 
-func NewSignalingServer(id_length int, prependMessageSenderIDToMessage, identifySelfInMessages bool) *SignalingServer {
+func NewSignalingServer(id_length int, prependMessageSenderIDToMessage, identifySelfInMessages, addSelfToGetAllPeerIDs bool) *SignalingServer {
 	peers := make(map[string]*websocket.Conn)
 	var webSocketUpgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true // all origins for now
 		},
 	}
-	return &SignalingServer{peers, id_length, webSocketUpgrader, prependMessageSenderIDToMessage, identifySelfInMessages}
+	return &SignalingServer{peers, id_length, webSocketUpgrader, prependMessageSenderIDToMessage, identifySelfInMessages, addSelfToGetAllPeerIDs}
 }
 
 func (s *SignalingServer) generateRandomID() string {
@@ -87,6 +92,10 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 		switch msg.Kind {
 		case message.GetAllPeerIDs:
 			peerIDs := s.GetAllPeerIDs()
+			if !s.addSelfToGetPeerIDs {
+				selfIndex := slices.Index(peerIDs, connID)
+				slices.Delete(peerIDs, selfIndex, selfIndex+1)
+			}
 			payload, err := json.Marshal(peerIDs)
 			if err != nil {
 				log.Printf("Error marshalling peer IDs: %v", err)
@@ -94,7 +103,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				continue
 			}
 			index := strings.Index(string(payload), connID)
-			if s.identifySelfInMessages{
+			if s.identifySelfInMessages {
 				payload = []byte(string(payload[0:index]) + "(self) " + string(payload[index:]))
 			}
 			err = conn.WriteMessage(websocket.TextMessage, payload)
@@ -102,7 +111,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				log.Println("Failed to send Peers IDs")
 			}
 		case message.SendToAllPeers:
-			if s.prependMessageSenderIDToMessage{
+			if s.prependMessageSenderIDToMessage {
 				msg.Content = "Message from " + connID + ": " + msg.Content // identifying the sender
 			}
 			for peerID, peerConn := range s.peers {
@@ -123,7 +132,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			if s.identifySelfInMessages && msg.PeerID == connID { // if the sender send to himself
 				msg.Content = "(To self) " + msg.Content
 			}
-			if s.prependMessageSenderIDToMessage{
+			if s.prependMessageSenderIDToMessage {
 				msg.Content = "From " + connID + ": " + msg.Content // identifying the sender
 			}
 			err = peerConn.WriteMessage(websocket.TextMessage, []byte(msg.Content))
