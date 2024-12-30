@@ -1,4 +1,4 @@
-github.com/AbdelrahmanWM/signalingserver v0.0.0-20241230050700-1670f7afb676 h1:nG9puuoB4DHXdlYWjg0ZOYszo2Y2wiCsHr3w8hxTJso=
-github.com/AbdelrahmanWM/signalingserver v0.0.0-20241230050700-1670f7afb676/go.mod h1:SfTszqbSInvh4DQwPXbm4HtTpgS0+GsEUq5zizNepz8=
+github.com/AbdelrahmanWM/signalingserver v1.0.1 h1:sz1pGPH0HzTePsdjeunmNst96zamjIv6KesG8eTZ6BQ=
+github.com/AbdelrahmanWM/signalingserver v1.0.1/go.mod h1:SfTszqbSInvh4DQwPXbm4HtTpgS0+GsEUq5zizNepz8=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=

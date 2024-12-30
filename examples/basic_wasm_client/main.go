@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	signalingServer := signalingserver.NewSignalingServer(20, false, false)
+	signalingServer := signalingserver.NewSignalingServer(20, true, true, false)
 	http.HandleFunc("/signalingserver", signalingServer.HandleWebSocketConn)
 	log.Println("Server listening on :8090")
 	err := http.ListenAndServe(":8090", nil)
