@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>Signaling Server Client</h1>
+    <button onclick="connectToWebSocket()">Connect to signaling server</button>
+    <button onclick="disconnectFromWebSocket()">Disconnect</button>
+    <button onclick="getAllPeerIDs()">Get all peers IDs</button>
+    <div
+      style="background-color: #eee; padding: 5px; margin: 5px; padding-top: 0"
+    >
+      <p>Message:</p>
+      <textarea
+        name=""
+        id="message"
+        rows="5"
+        cols="50"
+        placeholder="message"
+      ></textarea>
+    </div>
+    <div
+      style="
+        background-color: #eee;
+        padding: 5px;
+        margin: 5px;
+        display: flex;
+        justify-content: space-between;
+      "
+    >
+      <span>Send message to a peer</span>
+      <div>
+        <input id="peerID" type="text" required placeholder="peer ID" />
+        <button onclick="sendToPeer()">Send</button>
+      </div>
+    </div>
+    <div
+      style="
+        background-color: #eee;
+        padding: 5px;
+        margin: 5px;
+        display: flex;
+        justify-content: space-between;
+      "
+    >
+      <span>Send to all peers</span>
+      <button onclick="sendToAll()">Send To All</button>
+    </div>
+    <h1>Logs:</h1>
+    <div id="logArea"></div>
+    <script src="wasm_exec.js"></script>
+    <script>
+      // load the Go WebAssembly module
+      const go = new Go(); // Go is a global object provided by the Go runtime
+      WebAssembly.instantiateStreaming(
+        fetch("main.wasm"),
+        go.importObject
+      ).then((result) => {
+        go.run(result.instance);
+      });
+    </script>
+  </body>
+</html>
