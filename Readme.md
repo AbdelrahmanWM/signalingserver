@@ -1,4 +1,4 @@
-# WebRTC Signaling Server
+# WebSocket-based Signaling Server
 
 A simple WebRTC signaling server written in Go, designed to facilitate peer-to-peer communication in a mesh network. This server helps WebRTC peers discover each other, exchange session descriptions (SDP), and handle ICE candidates. It can be used in projects requiring direct browser-to-browser communication without relying on central media servers.
 
