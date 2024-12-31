@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+
 	"github.com/AbdelrahmanWM/signalingserver/signalingserver/message"
 	"github.com/AbdelrahmanWM/signalingserver/utils"
 	"github.com/gorilla/websocket"
@@ -76,8 +77,8 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			}
 			return
 		}
-		var msg *message.Message = &message.Message{}
-		var responseMsg *message.Message = &message.Message{
+		var msg message.Message = message.Message{}
+		var responseMsg message.Message = message.Message{
 			Kind:    message.TextMessage,
 			Reach:   message.Self,
 			Sender:  connID,
@@ -86,8 +87,10 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 		}
 		if !s.identifyMessageSender {
 			responseMsg.Sender = ""
+		} else if msg.Reach == message.Self {
+			responseMsg.Sender = "server"
 		}
-		err = json.Unmarshal(p, msg)
+		err = json.Unmarshal(p, &msg)
 		if err != nil {
 			log.Printf("Error unmarshaling message %v\n", err)
 			responseMsg.Content, err = json.Marshal(message.TextMessageContent{"Invalid message structure"})
