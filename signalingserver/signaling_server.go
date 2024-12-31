@@ -2,11 +2,10 @@ package signalingserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"slices"
-	"strings"
-
 	"github.com/AbdelrahmanWM/signalingserver/signalingserver/message"
 	"github.com/AbdelrahmanWM/signalingserver/utils"
 	"github.com/gorilla/websocket"
@@ -20,28 +19,23 @@ type SignalingServer struct {
 
 	webSocketUpgrader websocket.Upgrader
 
-	// This flag determines whether the signaling server should prepend the sender's ID to the message's content.
-	// If set to true, the server would include the ID of the peer sending the message (i.e., the sender's connID)
-	// before the actual message content.
-	prependMessageSenderIDToMessage bool
-
 	// This flag controls whether the server should identify a message being sent to the same peer
 	// (i.e., the message is being sent to the "self" peer) by appending a label like (self) or (To self) to the message.
-	identifySelfInMessages bool
+	identifyMessageSender bool
 
 	// This flag controls whether the server should include the requesting peer ID
 	// to the 'GetAllPeerIDs' message.
 	addSelfToGetPeerIDs bool
 }
 
-func NewSignalingServer(id_length int, prependMessageSenderIDToMessage, identifySelfInMessages, addSelfToGetAllPeerIDs bool) *SignalingServer {
+func NewSignalingServer(id_length int, identifyMessageSender, addSelfToGetAllPeerIDs bool) *SignalingServer {
 	peers := make(map[string]*websocket.Conn)
 	var webSocketUpgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true // all origins for now
 		},
 	}
-	return &SignalingServer{peers, id_length, webSocketUpgrader, prependMessageSenderIDToMessage, identifySelfInMessages, addSelfToGetAllPeerIDs}
+	return &SignalingServer{peers, id_length, webSocketUpgrader, identifyMessageSender, addSelfToGetAllPeerIDs}
 }
 
 func (s *SignalingServer) generateRandomID() string {
@@ -83,10 +77,24 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			return
 		}
 		var msg *message.Message = &message.Message{}
+		var responseMsg *message.Message = &message.Message{
+			Kind:    message.TextMessage,
+			Reach:   message.Self,
+			Sender:  connID,
+			PeerID:  connID,
+			Content: json.RawMessage{},
+		}
+		if !s.identifyMessageSender {
+			responseMsg.Sender = ""
+		}
 		err = json.Unmarshal(p, msg)
 		if err != nil {
 			log.Printf("Error unmarshaling message %v\n", err)
-			conn.WriteMessage(websocket.TextMessage, []byte("Invalid message format"))
+			responseMsg.Content, err = json.Marshal(message.TextMessageContent{"Invalid message structure"})
+			if err != nil {
+				log.Println("Error marshalling message")
+			}
+			conn.WriteJSON(responseMsg)
 			continue
 		}
 		switch msg.Kind {
@@ -100,58 +108,71 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 					log.Printf("connID %v not found in peerIDs", connID)
 				}
 			}
-			payload, err := json.Marshal(peerIDs)
+
+			responseMsg.Content, err = json.Marshal(message.GetAllPeerIDsContent{peerIDs})
 			if err != nil {
 				log.Printf("Error marshalling peer IDs: %v", err)
-				conn.WriteMessage(websocket.TextMessage, []byte("Failed to fetch peer IDs"))
-				continue
+				responseMsg.Content, err = json.Marshal(message.TextMessageContent{"Failed to fetch peer IDs"})
+				if err != nil {
+					log.Println("Error marshaling error message")
+					continue
+				}
+				break
 			}
+			responseMsg.Kind = message.GetAllPeerIDs
 
-			if s.addSelfToGetPeerIDs && s.identifySelfInMessages {
-				index := strings.Index(string(payload), connID)
-				payload = []byte(string(payload[0:index]) + "(self) " + string(payload[index:]))
+		case message.TextMessage, message.Offer, message.Answer, message.ICECandidate:
+			responseMsg.Kind = msg.Kind
+			responseMsg.Content = msg.Content
+			responseMsg.PeerID = msg.PeerID
+		case message.Disconnect:
+			log.Printf("Disconnect message received from %s", connID)
+			delete(s.peers, connID)
+			continue
+		default:
+			log.Printf("unexpected Message type: %v", msg.Kind)
+			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message type"))
+			continue
+		}
+
+		switch msg.Reach {
+		case message.OnePeer:
+			peerConn, exist := s.peers[msg.PeerID]
+			if !exist {
+				logMsg := fmt.Sprintf("Peer ID %s does not exist", msg.PeerID)
+				log.Println(logMsg)
+				responseMsg.Kind = message.TextMessage
+				responseMsg.Content, err = json.Marshal(message.TextMessageContent{logMsg})
+				responseMsg.Reach = message.Self
+				if err != nil {
+					log.Println("Error marshaling error message")
+					continue
+				}
 			}
-			err = conn.WriteMessage(websocket.TextMessage, payload)
+			err = peerConn.WriteJSON(responseMsg)
+
 			if err != nil {
-				log.Println("Failed to send Peers IDs")
+				log.Printf("Failed to send message to peer %s: %v\n", msg.PeerID, err)
 			}
-		case message.SendToAllPeers:
-			if s.prependMessageSenderIDToMessage {
-				msg.Content = "Message from " + connID + ": " + msg.Content // identifying the sender
-			}
+		case message.AllPeers:
 			for peerID, peerConn := range s.peers {
 				if peerID != connID {
-					err = peerConn.WriteMessage(websocket.TextMessage, []byte(msg.Content))
+					err = peerConn.WriteJSON(responseMsg)
 					if err != nil {
 						log.Printf("Failed to send message to peer %s: %v\n", peerID, err)
 					}
 				}
 			}
-		case message.SendToOnePeer:
-			peerConn, exist := s.peers[msg.PeerID]
-			if !exist {
-				log.Printf("Peer ID %s does not exist\n", msg.PeerID)
-				conn.WriteMessage(websocket.TextMessage, []byte("Peer ID doesn't exist"))
-				continue
-			}
-			if s.identifySelfInMessages && msg.PeerID == connID { // if the sender send to himself
-				msg.Content = "(To self) " + msg.Content
-			}
-			if s.prependMessageSenderIDToMessage {
-				msg.Content = "From " + connID + ": " + msg.Content // identifying the sender
-			}
-			err = peerConn.WriteMessage(websocket.TextMessage, []byte(msg.Content))
-
+		case message.Self:
+			err = conn.WriteJSON(responseMsg)
 			if err != nil {
-				log.Printf("Failed to send message to peer %s: %v\n", msg.PeerID, err)
-				conn.WriteMessage(websocket.TextMessage, []byte("Failed to send message to peer"))
+				log.Printf("Failed to send message to self %s: %v\n", connID, err)
 			}
-		case message.Disconnect:
-			log.Printf("Disconnect message received from %s", connID)
-			delete(s.peers, connID)
+		case message.None:
+			continue
 		default:
-			log.Printf("unexpected message.MessageType: %v", msg.Kind)
-			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message type"))
+			log.Printf("unexpected message reach type: %v", msg.Reach)
+			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message reach type"))
 			continue
 		}
 	}

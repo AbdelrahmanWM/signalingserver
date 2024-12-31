@@ -3,55 +3,45 @@ package message
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 type Message struct {
-	Kind    MessageType `json:"kind"`
-	PeerID  string      `json:"peerID"`
-	Content string      `json:"content"`
+	Kind    MessageType     `json:"kind"`
+	Reach   ReachType       `json:"reach"`
+	Sender  string          `json:"sender"`
+	PeerID  string          `json:"peerID"`
+	Content json.RawMessage `json:"content"`
 }
 
-type MessageType int
-
-const (
-	GetAllPeerIDs MessageType = iota
-	SendToOnePeer
-	SendToAllPeers
-	Disconnect
-	End
-)
-
-func (m MessageType) MarshalJSON() ([]byte, error) {
-	switch m {
+func (m *Message) UnmarshalContent() (interface{}, error) {
+	switch m.Kind {
 	case GetAllPeerIDs:
-		return json.Marshal("GetAllPeerIDs")
-	case SendToOnePeer:
-		return json.Marshal("SendToOnePeer")
-	case SendToAllPeers:
-		return json.Marshal("SendToAllPeers")
+		var getPeerIDs GetAllPeerIDsContent
+		err := json.Unmarshal(m.Content, &getPeerIDs)
+		return getPeerIDs, err
+	case TextMessage:
+		var textMessage TextMessageContent
+		err := json.Unmarshal(m.Content, &textMessage)
+		return textMessage, err
 	case Disconnect:
-		return json.Marshal("Disconnect")
+		var disconnect DisconnectContent
+		err := json.Unmarshal(m.Content, &disconnect)
+		return disconnect, err
+	case Offer:
+		var offer OfferContent
+		err := json.Unmarshal(m.Content, &offer)
+		return offer, err
+	case Answer:
+		var answer AnswerContent
+		err := json.Unmarshal(m.Content, &answer)
+		return answer, err
+	case ICECandidate:
+		var iceCandidate ICECandidateContent
+		err := json.Unmarshal(m.Content, &iceCandidate)
+		return iceCandidate, err
 	default:
-		return nil, fmt.Errorf("unknown MessageType: %d", m)
+		log.Printf("Invalid message kind %d\n", m.Kind)
+		return nil, fmt.Errorf("invalid message kind %d", m.Kind)
 	}
-}
-
-func (m *MessageType) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	switch s {
-	case "GetAllPeerIDs":
-		*m = GetAllPeerIDs
-	case "SendToOnePeer":
-		*m = SendToOnePeer
-	case "SendToAllPeers":
-		*m = SendToAllPeers
-	case "Disconnect":
-		*m = Disconnect
-	default:
-		return fmt.Errorf("unknown MessageType string: %s", s)
-	}
-	return nil
 }
