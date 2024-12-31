@@ -7,13 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"syscall/js"
-)
 
-type Message struct { // Expected by server
-	Kind    string `json:"kind"`
-	PeerID  string `json:"peerID"`
-	Content string `json:"content"`
-}
+	"github.com/AbdelrahmanWM/signalingserver/signalingserver/message"
+)
 
 var sockets []js.Value
 var socket js.Value
@@ -35,9 +31,13 @@ func connectToWebSocket(this js.Value, p []js.Value) interface{} {
 	// define webSocket on message event handler
 	socket.Set("onmessage", js.FuncOf(func(this js.Value, p []js.Value) any {
 		event := p[0]
-		message := event.Get("data").String() // Get message from event
-		log("(server)-> " + message)
-
+		messageData := event.Get("data").String() // Get message from event
+		var message message.Message
+		err := json.Unmarshal([]byte(messageData), &message)
+		if err != nil {
+			log("Error on unmarshaling message: " + err.Error())
+		}
+		log("(" + message.Sender + ") " + string(message.Content))
 		return nil
 	}))
 
@@ -67,10 +67,12 @@ func getAllPeerIDs(v js.Value, p []js.Value) any {
 		log("Socket connection not found.")
 		return nil
 	}
-	getAllPeerIDsMsg := Message{
-		Kind:    "GetAllPeerIDs",
+	getAllPeerIDsMsg := message.Message{
+		Kind:    message.GetAllPeerIDs,
 		PeerID:  "",
-		Content: "",
+		Content: nil,
+		Reach:   message.Self,
+		Sender:  "",
 	}
 	msgJSON, err := json.Marshal(getAllPeerIDsMsg)
 	if err != nil {
@@ -98,14 +100,18 @@ func sendToPeer(v js.Value, p []js.Value) any {
 		return nil
 	}
 	peerID := getElementByID("peerID").Get("value").String()
-	message := getElementByID("message").Get("value").String()
+	msg := getElementByID("message").Get("value").String()
 	fmt.Println(peerID)
-	fmt.Println(message)
-
-	messageToPeer := Message{
-		Kind:    "SendToOnePeer",
+	fmt.Println(msg)
+	msgContent, err := json.Marshal(message.TextMessageContent{msg})
+	if err != nil {
+		log("Error marshalling message")
+	}
+	messageToPeer := message.Message{
+		Kind:    message.TextMessage,
 		PeerID:  peerID,
-		Content: message,
+		Reach:   message.OnePeer,
+		Content: msgContent,
 	}
 	msgJSON, err := json.Marshal(messageToPeer)
 	if err != nil {
@@ -122,12 +128,17 @@ func sendToAll(v js.Value, p []js.Value) any {
 		log("Socket connection not found.")
 		return nil
 	}
-	message := getElementByID("message").Get("value").String()
-	fmt.Println(message)
-	messageToPeer := Message{
-		Kind:    "SendToAllPeers",
+	msg := getElementByID("message").Get("value").String()
+	fmt.Println(msg)
+	msgContent, err := json.Marshal(message.TextMessageContent{msg})
+	if err != nil {
+		log("Error marshalling message")
+	}
+	messageToPeer := message.Message{
+		Kind:    message.TextMessage,
+		Reach:   message.AllPeers,
 		PeerID:  "",
-		Content: message,
+		Content: msgContent,
 	}
 	msgJSON, err := json.Marshal(messageToPeer)
 	if err != nil {
