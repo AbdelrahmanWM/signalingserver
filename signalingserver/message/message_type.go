@@ -4,17 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 )
+
 type MessageType int
 
 const (
 	GetAllPeerIDs MessageType = iota
 	TextMessage
 	Disconnect
-	Offer  // webrtc specific
-	Answer // webrtc specific
+	Offer        // webrtc specific
+	Answer       // webrtc specific
 	ICECandidate // webrtc specific
 	End
 )
+
 func (m MessageType) MarshalJSON() ([]byte, error) {
 	switch m {
 	case GetAllPeerIDs:
@@ -64,19 +66,18 @@ type GetAllPeerIDsContent struct {
 type TextMessageContent struct {
 	Message string `json:"message"`
 }
-type DisconnectContent struct{
-
+type DisconnectContent struct {
 }
 type OfferContent struct {
-	Type string  `json:"type"`
-	SDP string `json:"sdp"`
+	Type int    `json:"type"` // be aware that you will need to do explicit casting to webrtc.SDPType
+	SDP  string `json:"sdp"`
 }
 type AnswerContent struct {
-    Type string `json:"type"`
-    SDP  string `json:"sdp"`
+	Type int    `json:"type"` // be aware that you will need to do explicit casting to webrtc.SDPType
+	SDP  string `json:"sdp"`
 }
 type ICECandidateContent struct {
-	Candidate string `json:"candidate"`
-	SdpMid string `json:"sdpMid"`
-	SdpMLineIndex int `json:"sdpMLineIndex"`
+	Candidate     string `json:"candidate"`
+	SdpMid        string `json:"sdpMid"`
+	SdpMLineIndex int    `json:"sdpMLineIndex"`
 }
