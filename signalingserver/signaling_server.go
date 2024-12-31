@@ -136,7 +136,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			continue
 		}
 
-		if msg.Reach == message.Self {
+		if msg.Reach == message.Self || msg.PeerID == connID {
 			responseMsg.Sender = "server"
 		}
 
@@ -149,6 +149,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				responseMsg.Kind = message.TextMessage
 				responseMsg.Content, err = json.Marshal(message.TextMessageContent{logMsg})
 				responseMsg.Reach = message.Self
+				responseMsg.Sender = "server"
 				if err != nil {
 					log.Println("Error marshaling error message")
 					continue
