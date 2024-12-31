@@ -87,8 +87,6 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 		}
 		if !s.identifyMessageSender {
 			responseMsg.Sender = ""
-		} else if msg.Reach == message.Self {
-			responseMsg.Sender = "server"
 		}
 		err = json.Unmarshal(p, &msg)
 		if err != nil {
@@ -138,6 +136,10 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			continue
 		}
 
+		if msg.Reach == message.Self {
+			responseMsg.Sender = "server"
+		}
+
 		switch msg.Reach {
 		case message.OnePeer:
 			peerConn, exist := s.peers[msg.PeerID]
@@ -151,6 +153,8 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 					log.Println("Error marshaling error message")
 					continue
 				}
+				conn.WriteJSON(responseMsg)
+				break
 			}
 			err = peerConn.WriteJSON(responseMsg)
 
