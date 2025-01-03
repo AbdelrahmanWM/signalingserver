@@ -14,6 +14,7 @@ const (
 	Offer        // webrtc specific
 	Answer       // webrtc specific
 	ICECandidate // webrtc specific
+	IdentifySelf 
 	End
 )
 
@@ -31,6 +32,8 @@ func (m MessageType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("Answer")
 	case ICECandidate:
 		return json.Marshal("ICECandidate")
+	case IdentifySelf:
+		return json.Marshal("IdentifySelf")
 	default:
 		return nil, fmt.Errorf("unknown MessageType: %d", m)
 	}
@@ -54,6 +57,8 @@ func (m *MessageType) UnmarshalJSON(data []byte) error {
 		*m = Answer
 	case "ICECandidate":
 		*m = ICECandidate
+	case "IdentifySelf":
+		*m = IdentifySelf
 	default:
 		return fmt.Errorf("unknown MessageType string: %s", s)
 	}
@@ -81,3 +86,6 @@ type ICECandidateContent struct {
 	SdpMid        string `json:"sdpMid"`
 	SdpMLineIndex int    `json:"sdpMLineIndex"`
 }
+type IdentifySelfContent struct {
+	ID string `json:"id"`
+};

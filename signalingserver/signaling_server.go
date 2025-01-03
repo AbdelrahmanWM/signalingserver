@@ -130,6 +130,14 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			log.Printf("Disconnect message received from %s", connID)
 			delete(s.peers, connID)
 			continue
+		case message.IdentifySelf:
+			responseMsg.Kind=msg.Kind
+			responseMsg.Reach=message.Self
+			msgContent,err:=json.Marshal(message.IdentifySelfContent{connID});
+			if err!=nil{
+				log.Printf("Error marshalling msg content: %v",err);
+			}
+			responseMsg.Content=msgContent
 		default:
 			log.Printf("unexpected Message type: %v", msg.Kind)
 			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message type"))

@@ -40,6 +40,10 @@ func (m *Message) UnmarshalContent() (interface{}, error) {
 		var iceCandidate ICECandidateContent
 		err := json.Unmarshal(m.Content, &iceCandidate)
 		return iceCandidate, err
+	case IdentifySelf:
+		var identifySelf IdentifySelfContent
+		err := json.Unmarshal(m.Content, &identifySelf)
+		return identifySelf, err
 	default:
 		log.Printf("Invalid message kind %d\n", m.Kind)
 		return nil, fmt.Errorf("invalid message kind %d", m.Kind)
