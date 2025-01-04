@@ -24,6 +24,8 @@ This example demonstrates how to connect to a WebSocket signaling server and int
    git clone github.com/AbdelrahmanWM/signalingserver/signalingserver
    ```
 
+2. Navigate to `examples/basic_wasm_client/`.
+
 2. Install dependencies and run the server:
 
    ```bash
@@ -34,7 +36,7 @@ This example demonstrates how to connect to a WebSocket signaling server and int
 
 ### Step 2: Set Up the Frontend
 
-1. Navigate to `examples/basic_wasm_client/`.
+1. Navigate to `examples/basic_wasm_client/wasm`.
 
 2. Build the WASM client:
 
