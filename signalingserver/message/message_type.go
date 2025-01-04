@@ -83,8 +83,9 @@ type AnswerContent struct {
 }
 type ICECandidateContent struct {
 	Candidate     string `json:"candidate"`
-	SdpMid        string `json:"sdpMid"`
-	SdpMLineIndex int    `json:"sdpMLineIndex"`
+	SdpMid        *string `json:"sdpMid"`
+	SdpMLineIndex *uint16 `json:"sdpMLineIndex"`
+	UsernameFragment *string `json:"usernameFragment"`
 }
 type IdentifySelfContent struct {
 	ID string `json:"id"`
