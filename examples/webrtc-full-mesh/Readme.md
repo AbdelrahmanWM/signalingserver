@@ -48,7 +48,7 @@ GOARCH=wasm GOOS=js go build -o main.wasm main.go
 
 This will generate the `main.wasm` file.
 
-Open `index.html` in your browser (ensure `main.wasm` is in the same directory as `index.html`).
+Open the `index.html` file in more than one browser tab or window. This will simulate multiple clients connecting to the signaling server and interacting with each other. (ensure `main.wasm` is in the same directory as `index.html`).
 
 ### Step 3: Interact with the WebRTC Client
 
