@@ -140,7 +140,10 @@ func (p *Peer) SendToAll(v js.Value, pp []js.Value) any {
 	}
 	return nil
 }
-
+func (p *Peer)SindIdentifySelfMessageJS(v js.Value, pp[]js.Value)any{
+	p.signalingServerConn.SindIdentifySelfMessage()
+	return nil
+}
 func main() {
 	peer := NewPeer()
 	Log("New peer!")
@@ -150,6 +153,7 @@ func main() {
 	js.Global().Set("newPeerConnection", js.FuncOf(peer.NewPeerConnectionJS))
 	js.Global().Set("clearLog", js.FuncOf(utils.ClearLog))
 	js.Global().Set("sendToAll", js.FuncOf(peer.SendToAll))
+	js.Global().Set("sindIdentifySelfMessage",js.FuncOf(peer.SindIdentifySelfMessageJS))
 	select {}
 }
 func (p *Peer) AddNewPeerConnection(id string, pc *webrtcpeerconn.PeerConnection) {
