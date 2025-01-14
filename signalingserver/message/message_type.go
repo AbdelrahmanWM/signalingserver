@@ -69,6 +69,7 @@ type GetAllPeerIDsContent struct {
 	PeersIDs []string `json:"peersIDs"`
 }
 type TextMessageContent struct {
+	Title string `json:"title"`
 	Message string `json:"message"`
 }
 type DisconnectContent struct {

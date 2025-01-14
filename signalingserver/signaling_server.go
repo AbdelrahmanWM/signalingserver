@@ -91,7 +91,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 		err = json.Unmarshal(p, &msg)
 		if err != nil {
 			log.Printf("Error unmarshaling message %v\n", err)
-			responseMsg.Content, err = json.Marshal(message.TextMessageContent{"Invalid message structure"})
+			responseMsg.Content, err = json.Marshal(message.TextMessageContent{"error", "Invalid message structure"})
 			if err != nil {
 				log.Println("Error marshalling message")
 			}
@@ -113,7 +113,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			responseMsg.Content, err = json.Marshal(message.GetAllPeerIDsContent{peerIDs})
 			if err != nil {
 				log.Printf("Error marshalling peer IDs: %v", err)
-				responseMsg.Content, err = json.Marshal(message.TextMessageContent{"Failed to fetch peer IDs"})
+				responseMsg.Content, err = json.Marshal(message.TextMessageContent{"error", "Failed to fetch peer IDs"})
 				if err != nil {
 					log.Println("Error marshaling error message")
 					continue
@@ -131,13 +131,13 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			delete(s.peers, connID)
 			continue
 		case message.IdentifySelf:
-			responseMsg.Kind=msg.Kind
-			responseMsg.Reach=message.Self
-			msgContent,err:=json.Marshal(message.IdentifySelfContent{connID});
-			if err!=nil{
-				log.Printf("Error marshalling msg content: %v",err);
+			responseMsg.Kind = msg.Kind
+			responseMsg.Reach = message.Self
+			msgContent, err := json.Marshal(message.IdentifySelfContent{connID})
+			if err != nil {
+				log.Printf("Error marshalling msg content: %v", err)
 			}
-			responseMsg.Content=msgContent
+			responseMsg.Content = msgContent
 		default:
 			log.Printf("unexpected Message type: %v", msg.Kind)
 			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message type"))
@@ -155,7 +155,7 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				logMsg := fmt.Sprintf("Peer ID %s does not exist", msg.PeerID)
 				log.Println(logMsg)
 				responseMsg.Kind = message.TextMessage
-				responseMsg.Content, err = json.Marshal(message.TextMessageContent{logMsg})
+				responseMsg.Content, err = json.Marshal(message.TextMessageContent{"error", logMsg})
 				responseMsg.Reach = message.Self
 				responseMsg.Sender = "server"
 				if err != nil {
