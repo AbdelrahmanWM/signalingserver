@@ -151,7 +151,7 @@ func main() {
 	js.Global().Set("disconnectFromSignalingServer", js.FuncOf(peer.DisconnectFromSignalingServer))
 	js.Global().Set("getAllPeerIDs", js.FuncOf(peer.GetAllPeerIDs))
 	js.Global().Set("newPeerConnection", js.FuncOf(peer.NewPeerConnectionJS))
-	js.Global().Set("clearLog", js.FuncOf(utils.ClearLog))
+	js.Global().Set("clearLogs", js.FuncOf(utils.ClearLogs))
 	js.Global().Set("sendToAll", js.FuncOf(peer.SendToAll))
 	js.Global().Set("sindIdentifySelfMessage",js.FuncOf(peer.SindIdentifySelfMessageJS))
 	select {}

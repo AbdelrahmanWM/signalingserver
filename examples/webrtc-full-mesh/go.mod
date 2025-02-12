@@ -3,7 +3,7 @@ module webrtc-full-mesh
 go 1.23.0
 
 require (
-	github.com/AbdelrahmanWM/signalingserver v1.0.6
+	github.com/AbdelrahmanWM/signalingserver v1.0.8
 	github.com/pion/webrtc/v4 v4.0.7
 )
 

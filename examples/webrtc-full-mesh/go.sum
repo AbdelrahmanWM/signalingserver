@@ -1,5 +1,7 @@
 github.com/AbdelrahmanWM/signalingserver v1.0.6 h1:FVjB/XQmvs9/z0OfzbCL7PzpH4vKBOZpvnS1t93F5j4=
 github.com/AbdelrahmanWM/signalingserver v1.0.6/go.mod h1:SfTszqbSInvh4DQwPXbm4HtTpgS0+GsEUq5zizNepz8=
+github.com/AbdelrahmanWM/signalingserver v1.0.8 h1:39wXJZal7wrjNyq9O5BCVrg6OaboU5GntkARaPrEZgA=
+github.com/AbdelrahmanWM/signalingserver v1.0.8/go.mod h1:SfTszqbSInvh4DQwPXbm4HtTpgS0+GsEUq5zizNepz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

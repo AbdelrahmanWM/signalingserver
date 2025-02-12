@@ -22,7 +22,7 @@ func GetElementByID(id string) js.Value {
 	}
 	return el
 }
-func ClearLog(v js.Value, p []js.Value) any {
+func ClearLogs(v js.Value, p []js.Value) any {
 	el := GetElementByID("logArea")
 	el.Set("innerHTML", "")
 	return nil
