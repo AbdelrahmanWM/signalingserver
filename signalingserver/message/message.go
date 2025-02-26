@@ -44,6 +44,10 @@ func (m *Message) UnmarshalContent() (interface{}, error) {
 		var identifySelf IdentifySelfContent
 		err := json.Unmarshal(m.Content, &identifySelf)
 		return identifySelf, err
+	case DisconnectionNotification:
+		var disconnectedContent DisconnectionNotificationContent
+		err := json.Unmarshal(m.Content, &disconnectedContent)
+		return disconnectedContent, err
 	default:
 		log.Printf("Invalid message kind %d\n", m.Kind)
 		return nil, fmt.Errorf("invalid message kind %d", m.Kind)

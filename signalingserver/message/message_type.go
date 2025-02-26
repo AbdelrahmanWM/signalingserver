@@ -15,6 +15,7 @@ const (
 	Answer       // webrtc specific
 	ICECandidate // webrtc specific
 	IdentifySelf 
+	DisconnectionNotification 
 	End
 )
 
@@ -34,6 +35,8 @@ func (m MessageType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("ICECandidate")
 	case IdentifySelf:
 		return json.Marshal("IdentifySelf")
+	case DisconnectionNotification:
+		return json.Marshal("DisconnectionNotification")
 	default:
 		return nil, fmt.Errorf("unknown MessageType: %d", m)
 	}
@@ -59,6 +62,9 @@ func (m *MessageType) UnmarshalJSON(data []byte) error {
 		*m = ICECandidate
 	case "IdentifySelf":
 		*m = IdentifySelf
+	case "DisconnectionNotification":
+		*m = DisconnectionNotification
+
 	default:
 		return fmt.Errorf("unknown MessageType string: %s", s)
 	}
@@ -73,6 +79,7 @@ type TextMessageContent struct {
 	Message string `json:"message"`
 }
 type DisconnectContent struct {
+	NotifyAll string `json:"notifyAll"`
 }
 type OfferContent struct {
 	Type int    `json:"type"` // be aware that you will need to do explicit casting to webrtc.SDPType
@@ -91,3 +98,7 @@ type ICECandidateContent struct {
 type IdentifySelfContent struct {
 	ID string `json:"id"`
 };
+
+type DisconnectionNotificationContent struct{
+	DisconnectedPeerID string `json:"disconnectedPeerID"`
+}

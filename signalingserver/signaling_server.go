@@ -128,8 +128,26 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			responseMsg.PeerID = msg.PeerID
 		case message.Disconnect:
 			log.Printf("Disconnect message received from %s", connID)
-			delete(s.peers, connID)
-			continue
+			var disconnectContent message.DisconnectContent
+			err := json.Unmarshal(msg.Content, &disconnectContent)
+			if err != nil {
+				log.Printf("Error unmarshaling msg content: %v", err)
+				conn.WriteMessage(websocket.TextMessage, []byte("Failed to disconnect from the signaling server"))
+				continue
+			} else {
+				delete(s.peers, connID)
+				responseMsg.Kind = message.DisconnectionNotification
+				disconnectionNotificationContent := message.DisconnectionNotificationContent{msg.Sender}
+				responseMsg.Content, err = json.Marshal(disconnectionNotificationContent)
+				if err != nil {
+					log.Printf("Failed to notify peers of %s disconnection", msg.Sender)
+					continue
+				} else {
+					msg.Reach = message.AllPeers // so that the notification gets sent to everybody
+				}
+
+			}
+
 		case message.IdentifySelf:
 			responseMsg.Kind = msg.Kind
 			responseMsg.Reach = message.Self
@@ -140,7 +158,14 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 			responseMsg.Content = msgContent
 		default:
 			log.Printf("unexpected Message type: %v", msg.Kind)
-			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected message type"))
+			responseMsg.Kind = message.TextMessage
+			textMessageContent := message.TextMessageContent{Title: "", Message: "unexpected message type"}
+			responseMsg.Content, err = json.Marshal(textMessageContent)
+			if err != nil {
+				log.Printf("Error marshalling msg content: %v", err)
+			} else {
+				conn.WriteJSON(responseMsg)
+			}
 			continue
 		}
 
