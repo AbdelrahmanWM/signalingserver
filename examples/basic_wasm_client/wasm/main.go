@@ -44,6 +44,7 @@ func connectToWebSocket(this js.Value, p []js.Value) interface{} {
 	// Define Websocket onclose event handler
 
 	socket.Set("onclose", js.FuncOf(func(this js.Value, p []js.Value) any {
+
 		log("Websocket connection closed.")
 		return nil
 	}))
@@ -57,6 +58,27 @@ func connectToWebSocket(this js.Value, p []js.Value) interface{} {
 	return nil
 }
 func disconnectFromWebSocket(v js.Value, p []js.Value) any {
+	disconnectContent := message.DisconnectContent{true}
+	disconnectContentJSON, err := json.Marshal(disconnectContent)
+	if err != nil {
+		log("Failed to send disconnection message")
+		return nil
+	}
+	disconnectionMsg := message.Message{
+		Kind:    message.Disconnect,
+		PeerID:  "",
+		Content: disconnectContentJSON,
+		Reach:   message.Self,
+		Sender:  "",
+	}
+	msgJSON, err := json.Marshal(disconnectionMsg)
+	if err != nil {
+		log("Error marshalling message:" + err.Error())
+		return nil
+	}
+	log("Sending message: " + string(msgJSON))
+	socket.Call("send", string(msgJSON))
+	////////// disconnecting the client
 	if socket.Get("readyState").Int() == 1 {
 		socket.Call("close")
 	}
@@ -100,10 +122,11 @@ func sendToPeer(v js.Value, p []js.Value) any {
 		return nil
 	}
 	peerID := getElementByID("peerID").Get("value").String()
+	title := getElementByID("title").Get("value").String()
 	msg := getElementByID("message").Get("value").String()
 	fmt.Println(peerID)
 	fmt.Println(msg)
-	msgContent, err := json.Marshal(message.TextMessageContent{msg})
+	msgContent, err := json.Marshal(message.TextMessageContent{title, msg})
 	if err != nil {
 		log("Error marshalling message")
 	}
@@ -129,8 +152,9 @@ func sendToAll(v js.Value, p []js.Value) any {
 		return nil
 	}
 	msg := getElementByID("message").Get("value").String()
+	title := getElementByID("title").Get("value").String()
 	fmt.Println(msg)
-	msgContent, err := json.Marshal(message.TextMessageContent{msg})
+	msgContent, err := json.Marshal(message.TextMessageContent{title, msg})
 	if err != nil {
 		log("Error marshalling message")
 	}
