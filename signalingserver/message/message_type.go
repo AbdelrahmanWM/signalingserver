@@ -79,7 +79,7 @@ type TextMessageContent struct {
 	Message string `json:"message"`
 }
 type DisconnectContent struct {
-	NotifyAll string `json:"notifyAll"`
+	NotifyAll bool `json:"notifyAll"`
 }
 type OfferContent struct {
 	Type int    `json:"type"` // be aware that you will need to do explicit casting to webrtc.SDPType

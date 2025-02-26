@@ -136,14 +136,16 @@ func (s *SignalingServer) HandleWebSocketConn(w http.ResponseWriter, r *http.Req
 				continue
 			} else {
 				delete(s.peers, connID)
-				responseMsg.Kind = message.DisconnectionNotification
-				disconnectionNotificationContent := message.DisconnectionNotificationContent{msg.Sender}
-				responseMsg.Content, err = json.Marshal(disconnectionNotificationContent)
-				if err != nil {
-					log.Printf("Failed to notify peers of %s disconnection", msg.Sender)
-					continue
-				} else {
-					msg.Reach = message.AllPeers // so that the notification gets sent to everybody
+				if disconnectContent.NotifyAll {
+					responseMsg.Kind = message.DisconnectionNotification
+					disconnectionNotificationContent := message.DisconnectionNotificationContent{connID}
+					responseMsg.Content, err = json.Marshal(disconnectionNotificationContent)
+					if err != nil {
+						log.Printf("Failed to notify peers of %s disconnection", connID)
+						continue
+					} else {
+						msg.Reach = message.AllPeers // so that the notification gets sent to everybody
+					}
 				}
 
 			}
